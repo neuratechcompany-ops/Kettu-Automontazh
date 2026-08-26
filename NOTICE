@@ -1,10 +1,10 @@
-Montazher bundles third-party assets:
+Kettu Automontazh bundles third-party assets:
 
-* Montserrat (montazher/fonts/Montserrat-*.ttf)
-  SIL Open Font License 1.1 — see montazher/fonts/OFL.txt
+* Montserrat (automontazh/fonts/Montserrat-*.ttf)
+  SIL Open Font License 1.1 — see automontazh/fonts/OFL.txt
   https://github.com/JulietaUla/Montserrat
 
-* YuNet face detector (montazher/models/yunet.onnx)
+* YuNet face detector (automontazh/models/yunet.onnx)
   Apache License 2.0, from OpenCV Zoo
   https://github.com/opencv/opencv_zoo
 

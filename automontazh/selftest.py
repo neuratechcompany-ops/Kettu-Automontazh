@@ -50,7 +50,7 @@ def _fixture(d: Path):
 
 
 def cmd_selftest(args):
-    ve = [sys.executable, "-m", "montazher"]
+    ve = [sys.executable, "-m", "automontazh"]
     keep = args.keep
     d = Path(tempfile.mkdtemp(prefix="ve_selftest_"))
     results = []

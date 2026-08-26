@@ -1,6 +1,6 @@
-# Montazher
+# Kettu Automontazh
 
-*Part of the Kettu toolchain. The installed command is `montazher`.*
+*Part of the Kettu toolchain.*
 
 A local, free video-editing engine for coding agents.
 
@@ -24,17 +24,17 @@ machine (Metal on Apple Silicon, CPU or CUDA elsewhere); everything else is ffmp
 ## Install
 
 ```
-pip install montazher[mlx]      # Apple Silicon
-pip install montazher[faster]   # Linux / Windows / Intel Mac
+pip install kettu-automontazh[mlx]      # Apple Silicon
+pip install kettu-automontazh[faster]   # Linux / Windows / Intel Mac
 ```
 
 You also need `ffmpeg` built with libass, freetype and libplacebo-free filters.
-Run `montazher doctor` — it tells you exactly what is missing.
+Run `automontazh doctor` — it tells you exactly what is missing.
 
 ## Use
 
 ```
-montazher shorts take.mp4
+automontazh shorts take.mp4
 ```
 
 One command: transcribe, cut, grade, fix the voice, caption, render, verify.

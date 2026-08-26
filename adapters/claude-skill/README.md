@@ -7,5 +7,5 @@ mkdir -p ~/.claude/skills/video-edit
 ln -sf "$PWD/SKILL.md" ~/.claude/skills/video-edit/SKILL.md
 ```
 
-The skill drives the installed `montazher` command; it carries no code of its own.
+The skill drives the installed `automontazh` command; it carries no code of its own.
 For any other agent, use [AGENT.md](../../AGENT.md) instead.

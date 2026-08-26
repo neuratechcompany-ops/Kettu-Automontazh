@@ -22,10 +22,10 @@ description: Edit and assemble footage the user has already shot — cut filler 
 
 Работай из папки с исходниками — движок держит там кэш в `.ve/`.
 
-Проверки: `montazher doctor` — окружение, `montazher selftest` — весь конвейер на синтетическом
+Проверки: `automontazh doctor` — окружение, `automontazh selftest` — весь конвейер на синтетическом
 дубле (11 шагов, ~1 мин). Запускай `selftest` после любой правки движка.
 
-Модели ASR лежат локально, качаются один раз: `montazher pull turbo`.
+Модели ASR лежат локально, качаются один раз: `automontazh pull turbo`.
 
 | модель | размер | скорость | когда |
 |---|---|---|---|
@@ -34,14 +34,14 @@ description: Edit and assemble footage the user has already shot — cut filler 
 | `small` / `tiny` | 0.5 ГБ / 75 МБ | мгновенно | черновая раскадровка, отладка |
 
 Если `transcribe` падает на загрузке — это Xet-транспорт HuggingFace виснет на
-некоторых сетях. `montazher pull` его обходит; просто повтори команду.
+некоторых сетях. `automontazh pull` его обходит; просто повтори команду.
 
 ## Быстрый путь: один ролик — одна команда
 
 Если задача обычная («смонтируй мне из этого шортс»), не собирай конвейер руками:
 
 ```
-montazher shorts FILE.mp4
+automontazh shorts FILE.mp4
 ```
 
 Делает всё разом: расшифровка → автонарезка → авто-грейд по замерам → реврейм по лицу
@@ -54,7 +54,7 @@ montazher shorts FILE.mp4
 только по явной просьбе), `--fast`, `--lang ru`.
 
 **Дальше правь EDL, а не команду.** Не нравится выбор кусков — редактируй
-`shorts.json` и гони `montazher render shorts.json`: исходники уже в кэше, пересборка
+`shorts.json` и гони `automontazh render shorts.json`: исходники уже в кэше, пересборка
 занимает секунды.
 
 Ручной конвейер ниже нужен, когда задача нестандартная: несколько исходников,
@@ -62,20 +62,20 @@ montazher shorts FILE.mp4
 
 ## Рабочий цикл
 
-1. **`montazher probe .`** — инвентаризация: длительность, разрешение, fps, звук.
-2. **`montazher transcribe FILE --lang ru`** — локальный ASR на Metal → `.ve/*.words.json`.
+1. **`automontazh probe .`** — инвентаризация: длительность, разрешение, fps, звук.
+2. **`automontazh transcribe FILE --lang ru`** — локальный ASR на Metal → `.ve/*.words.json`.
    Кэшируется; повтор бесплатный. Для каждого исходника со звуком.
-3. **`montazher pack FILE`** → `.ve/*.transcript.md`. **Прочитай его целиком.** Это твой
+3. **`automontazh pack FILE`** → `.ve/*.transcript.md`. **Прочитай его целиком.** Это твой
    единственный обязательный вход. В нём размечено: `⟨слово⟩` — что срежет
    автонарезка, `⏸2.4s` — мёртвый воздух, `⚠` — низкая уверенность ASR.
-4. **`montazher autocut FILE --captions hormozi`** → черновой `edl.json`.
+4. **`automontazh autocut FILE --captions hormozi`** → черновой `edl.json`.
 5. **Правь EDL руками.** Это главный шаг и он твой, а не машины: выбрать лучший
    дубль, переставить смысловые блоки, задать грейд и переходы, снять субтитры там,
    где они мешают. Автонарезка — только черновик.
-6. **`montazher render edl.json`** → финал. `--dry-run` покажет план без рендера.
-7. **`montazher verify edit/final.mp4 --edl .ve/edl.resolved.json`** — обязательно.
+6. **`automontazh render edl.json`** → финал. `--dry-run` покажет план без рендера.
+7. **`automontazh verify edit/final.mp4 --edl .ve/edl.resolved.json`** — обязательно.
    `FAIL` чинишь и перерендериваешь, `warn` объясняешь пользователю.
-8. **`montazher frames edit/final.mp4 -n 9`** — контактный лист. Посмотри сам, прежде чем
+8. **`automontazh frames edit/final.mp4 -n 9`** — контактный лист. Посмотри сам, прежде чем
    отдавать. Приложи его к ответу.
 
 ## Жёсткие правила
@@ -129,7 +129,7 @@ montazher shorts FILE.mp4
 Всё остальное, что повторяется, движок только **показывает**:
 
 ```
-montazher tics FILE      # список повторов с таймкодами и пометкой «режется / решай сам»
+automontazh tics FILE      # список повторов с таймкодами и пометкой «режется / решай сам»
 ```
 
 Риторический повтор — приём, а не запинка. «Про ИИ, а именно про ИИ в исполнении
@@ -204,9 +204,9 @@ montazher tics FILE      # список повторов с таймкодами
    назвал их колхозом. Только по явной просьбе.
 
 ```
-montazher cards edl.json --auto     # найти перечисление и пронумеровать
-montazher render edl.json --cards   # то же на лету
-montazher shorts FILE --cards
+automontazh cards edl.json --auto     # найти перечисление и пронумеровать
+automontazh render edl.json --cards   # то же на лету
+automontazh shorts FILE --cards
 ```
 
 | тип | что это | ключи |
@@ -272,8 +272,8 @@ libass берёт из них начертание по умолчанию (Regu
 ## Звук (`--voice`)
 
 ```
-montazher voice FILE               # замерить и показать, что будет сделано
-montazher render edl.json --voice  # применить
+automontazh voice FILE               # замерить и показать, что будет сделано
+automontazh render edl.json --voice  # применить
 ```
 
 Та же логика, что с картинкой: **сначала замер, потом решение**. И тот же честный
@@ -308,9 +308,9 @@ montazher render edl.json --voice  # применить
 Не пресет «сделай красиво», а коррекция, выведенная из замеров конкретного файла:
 
 ```
-montazher enhance FILE            # показать замеры и что будет сделано
-montazher autocut FILE --grade auto ...
-montazher render edl.json --grade auto
+automontazh enhance FILE            # показать замеры и что будет сделано
+automontazh autocut FILE --grade auto ...
+automontazh render edl.json --grade auto
 ```
 
 Что меряется по кадрам (OpenCV, ~120 сэмплов) и что из этого следует:
@@ -341,10 +341,10 @@ montazher render edl.json --grade auto
 Поэтому по умолчанию для вертикали включай **автореврейм** — кроп едет за лицом:
 
 ```
-montazher autocut FILE --width 1080 --height 1920 --fit crop --reframe --captions hormozi
-montazher render edl.json                    # реврейм уже записан в EDL
-montazher render edl.json --reframe          # или включить на лету
-montazher render edl.json --no-reframe       # или выключить
+automontazh autocut FILE --width 1080 --height 1920 --fit crop --reframe --captions hormozi
+automontazh render edl.json                    # реврейм уже записан в EDL
+automontazh render edl.json --reframe          # или включить на лету
+automontazh render edl.json --no-reframe       # или выключить
 ```
 
 Как это устроено: `ve reframe FILE --to 1080x1920` прогоняет YuNet (OpenCV,
@@ -365,12 +365,12 @@ montazher render edl.json --no-reframe       # или выключить
 
 ## Когда всё-таки смотреть картинку
 
-`montazher frames FILE --at 12.5,30,45` или `--start A --end B -n 12`. Обращайся, когда:
+`automontazh frames FILE --at 12.5,30,45` или `--start A --end B -n 12`. Обращайся, когда:
 выбираешь между визуально разными дублями; проверяешь, в кадре ли человек; ищешь
 момент для b-roll; финально принимаешь работу. Не сканируй видео целиком — это
 именно то, чего вся конструкция избегает.
 
-Ещё: `montazher silence FILE` — карта мёртвого воздуха, `montazher scenes FILE` — смены планов
+Ещё: `automontazh silence FILE` — карта мёртвого воздуха, `automontazh scenes FILE` — смены планов
 (полезно для отснятого с нескольких камер или для поиска склеек в чужом материале).
 
 ## Ограничения — говори о них честно

@@ -1,4 +1,4 @@
-# Montazher — instructions for an agent
+# Kettu Automontazh — instructions for an agent
 
 You are editing video for a person who shot the footage themselves. You do not
 generate images or sound; you decide **what to keep, in what order, and how it
@@ -13,12 +13,12 @@ pointless: the decisions that make an edit good are decisions about **speech**.
 
 So the loop is:
 
-1. `montazher transcribe FILE` — word-level timings, locally.
-2. `montazher pack FILE` — the transcript as compact markdown. **Read this.** An
+1. `automontazh transcribe FILE` — word-level timings, locally.
+2. `automontazh pack FILE` — the transcript as compact markdown. **Read this.** An
    hour of footage is ~12 KB.
 3. Decide the cut *from the text*, write it as an EDL (JSON).
-4. `montazher render edl.json` — ffmpeg does the work.
-5. `montazher verify OUT --edl .ve/edl.resolved.json` — the engine checks itself.
+4. `automontazh render edl.json` — ffmpeg does the work.
+5. `automontazh verify OUT --edl .ve/edl.resolved.json` — the engine checks itself.
 
 Look at actual pixels only when the decision needs them (see *When to look*).
 
@@ -37,7 +37,7 @@ Never parse the prose — parse the JSON.
 ## The fast path
 
 ```
-montazher shorts take.mp4
+automontazh shorts take.mp4
 ```
 
 Transcribe → cut → grade the picture → fix the voice → reframe → caption → verify.
@@ -78,7 +78,7 @@ These are not style preferences. Breaking them produces artefacts a viewer notic
 - Blown takes: the same phrase said twice in a row — the first pass is dropped.
 - Dead air longer than `--max-gap`.
 
-Everything else that repeats is **reported, never cut**: `montazher tics FILE`.
+Everything else that repeats is **reported, never cut**: `automontazh tics FILE`.
 Rhetorical repetition is a device. Cutting it breaks the sentence, and only a human
 can tell the difference.
 
@@ -87,10 +87,10 @@ can tell the difference.
 Two commands look at the actual file and derive the correction from it, rather
 than applying a preset:
 
-- `montazher enhance FILE` — picture: black point, clipping, white balance
+- `automontazh enhance FILE` — picture: black point, clipping, white balance
   (measured on a bright neutral surface, **not** on mid-tones, which skin
   dominates), saturation, sharpness, noise.
-- `montazher voice FILE` — sound: per-band spectrum against a speech target,
+- `automontazh voice FILE` — sound: per-band spectrum against a speech target,
   noise floor per band, signal-to-noise, reverb tail.
 
 Run them and read the numbers before promising anything. A common surprise: phone
@@ -109,7 +109,7 @@ Built from word-level ASR; a word lights up exactly when it is spoken.
 | `standard` / `minimal` | conventional subtitles |
 
 Fonts ship with the package; nothing depends on what the host system has. To add
-one, drop a **static** TTF into `montazher/fonts/`. Variable fonts do not work —
+one, drop a **static** TTF into `automontazh/fonts/`. Variable fonts do not work —
 libass takes their default (Regular) instance. Name the ASS style after the family
 recorded *inside the file*, and keep one weight per family, or libass silently
 substitutes a different face and measured layout stops matching.
@@ -135,7 +135,7 @@ source is already vertical it does nothing.
 
 ## When to look at pixels
 
-`montazher frames FILE --at 12.5,30,45` or `--start A --end B -n 12`. Worth it when:
+`automontazh frames FILE --at 12.5,30,45` or `--start A --end B -n 12`. Worth it when:
 choosing between visually different takes, confirming someone is in frame, hunting
 for a cutaway, or accepting the final result. Never scan the whole video — that is
 the cost this whole design exists to avoid.
@@ -150,6 +150,6 @@ the cost this whole design exists to avoid.
 
 ## Reference
 
-`montazher --help` lists every command. `montazher doctor` checks the toolchain and
-names what is missing. `montazher selftest` drives the whole pipeline through a
+`automontazh --help` lists every command. `automontazh doctor` checks the toolchain and
+names what is missing. `automontazh selftest` drives the whole pipeline through a
 synthetic take and reports pass/fail per stage — run it after changing the engine.
