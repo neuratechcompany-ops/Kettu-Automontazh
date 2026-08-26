@@ -1,5 +1,7 @@
 # Montazher
 
+*Part of the Kettu toolchain. The installed command is `montazher`.*
+
 A local, free video-editing engine for coding agents.
 
 The agent does not watch the video. It **reads** it: an hour of footage is ~12 KB of
