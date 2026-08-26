@@ -1,0 +1,32 @@
+[project]
+name = "montazher"
+version = "0.1.0"
+description = "Local, free video-editing engine for coding agents. Reads transcripts instead of watching frames."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["video", "editing", "ffmpeg", "whisper", "agents", "shorts", "captions"]
+
+dependencies = [
+  "numpy>=1.24",
+  "opencv-python-headless>=4.8",
+  "pillow>=10.0",
+]
+
+[project.optional-dependencies]
+mlx = ["mlx-whisper>=0.4"]          # Apple Silicon: GPU via Metal
+faster = ["faster-whisper>=1.0"]    # everything else: CPU, CUDA on Linux
+fonts = ["fonttools>=4.50"]         # only to add new fonts
+
+[project.scripts]
+montazher = "montazher.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["montazher"]
+
+[tool.hatch.build]
+artifacts = ["montazher/fonts/*.ttf", "montazher/models/*.onnx"]

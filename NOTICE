@@ -1,0 +1,11 @@
+Montazher bundles third-party assets:
+
+* Montserrat (montazher/fonts/Montserrat-*.ttf)
+  SIL Open Font License 1.1 — see montazher/fonts/OFL.txt
+  https://github.com/JulietaUla/Montserrat
+
+* YuNet face detector (montazher/models/yunet.onnx)
+  Apache License 2.0, from OpenCV Zoo
+  https://github.com/opencv/opencv_zoo
+
+Neither is modified.
