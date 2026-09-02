@@ -108,8 +108,10 @@ Built from word-level ASR; a word lights up exactly when it is spoken.
 | `karaoke` | word fills as it is said |
 | `standard` / `minimal` | conventional subtitles |
 
-Fonts ship with the package; nothing depends on what the host system has. To add
-one, drop a **static** TTF into `automontazh/fonts/`. Variable fonts do not work —
+Three Cyrillic-capable fonts ship with the package — Onest (default), Golos Text and
+Montserrat, all SIL OFL — so nothing depends on what the host system has. Default
+type size is `short side / 13.5`; bigger type covers the speaker's face. To add a
+font, drop a **static** TTF into `automontazh/fonts/`. Variable fonts do not work —
 libass takes their default (Regular) instance. Name the ASS style after the family
 recorded *inside the file*, and keep one weight per family, or libass silently
 substitutes a different face and measured layout stops matching.
@@ -132,6 +134,33 @@ anything that landed in a removed section.
 positions with a dead zone so small movements do not jitter. If a face is found in
 under 25 % of frames it says so and falls back to a static centre crop. If the
 source is already vertical it does nothing.
+
+## Covers
+
+```
+automontazh cover FILE --shortlist 8
+automontazh cover FILE --at 22.0 --text "SWARM INTELLIGENCE" --accent "SWARM"
+```
+
+Frames are ranked on measured face size and sharpness. **A machine cannot judge an
+expression**, and the top-scoring frame is regularly one where the subject is
+mid-word or wide-eyed. Show the shortlist, let a person pick, then pass `--at`.
+Do not present the automatic choice as final.
+
+The still gets the same auto-grade as the film. A cover that looks worse than the
+video it fronts is a bug, not a style choice.
+
+## Strength, and why the default is not 1.0
+
+`--grade-strength` (picture) and `--strength` (voice) scale the whole correction.
+**Start at 0.6 for the picture.** At full strength the denoiser smooths skin and the
+sharpener then advertises it, which reads as wax. Judge it on a 1:1 crop of the face,
+never on a scaled-down frame — at thumbnail size every setting looks the same.
+
+Watch the white balance on a coloured set. The neutral reference is the brightest
+unclipped band; if that band is a gold curtain or a painted wall, the engine treats
+it as grey and cools the whole image. The ±7 % clamp does not always save it — if the
+profile shows the correction pinned at its limit, look at the frame.
 
 ## When to look at pixels
 
