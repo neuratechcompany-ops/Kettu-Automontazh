@@ -112,6 +112,10 @@ def cmd_selftest(args):
         step("tics report", ["tics", "take.mp4"])
         step("voice profile", ["voice", "take.mp4"])
         step("render with voice", ["render", "a.json", "--voice"])
+        step("chart counter", ["chart", "counter", "--to", "70", "--label", "машин",
+                               "--dur", "1.0", "--out", "edit/ch.mp4"])
+        step("chart bars", ["chart", "bars", "--data", "А=30,Б=70",
+                            "--dur", "1.0", "--out", "edit/cb.mp4"])
         step("reframe track", ["reframe", "take.mp4", "--to", "1080x1920"])
         step("render with reframe", ["render", "b.json", "--reframe"])
 
@@ -144,6 +148,12 @@ def cmd_selftest(args):
         ok_nd = "afftdn" not in _c      # 45 dB SNR: nothing for a denoiser to do
         results.append(("clean audio gets no denoiser", ok_nd, []))
         OUT.say(f"  {'ok  ' if ok_nd else 'FAIL'} clean audio gets no denoiser")
+
+        vc = probe(d / "edit" / "ch.mp4")
+        ok_ch = abs(vc["duration"] - 1.0) < 0.15 and vc.get("has_audio")
+        results.append(("chart clip is the length it claims", ok_ch, []))
+        print(f"  {'ok  ' if ok_ch else 'FAIL'} chart clip is the length it claims "
+              f"({vc['duration']:.2f}s)")
 
         from . import cards
         ok_hex = cards.hex_ass("#FFD400") == "&H0000D4FF"

@@ -135,6 +135,21 @@ positions with a dead zone so small movements do not jitter. If a face is found 
 under 25 % of frames it says so and falls back to a static centre crop. If the
 source is already vertical it does nothing.
 
+## Charts
+
+```
+automontazh chart counter --to 70 --label "machines" --dur 2.5
+automontazh chart bars --data "Consulting=30,Product=70" --title "where the company is going"
+```
+
+Drawn with Pillow in the caption's visual language — same font, same accent pill —
+so a chart reads as part of the film rather than an import from a plotting library.
+The output is a plain MP4 that goes in as a cutaway via `v_src`, with the speaker's
+sound running underneath. Split the clip in three: before, chart, after.
+
+Set `"captions": false` on the chart clip, or the subtitle repeats words the graphic
+already shows. Keep the cutaway no longer than the chart, or its last frame freezes.
+
 ## Covers
 
 ```

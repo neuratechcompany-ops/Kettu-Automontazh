@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from .core import OUT, FFMPEG, FFPROBE, die, hhmmss, log, probe, VIDEO_EXT, AUDIO_EXT  # noqa: E402
-from . import analyze, asr, captions, cover, enhance, reframe, render  # noqa: E402
+from . import analyze, asr, captions, charts, cover, enhance, reframe, render  # noqa: E402
 from . import cards, selftest, shorts, voice  # noqa: E402
 
 
@@ -200,6 +200,23 @@ def main():
     p.add_argument("--threshold", type=float, default=10.0)
     p.add_argument("--limit", type=int, default=60)
     p.set_defaults(fn=analyze.cmd_scenes)
+
+    p = sub.add_parser("chart", help="animated data graphic as a cutaway clip")
+    p.add_argument("kind", choices=["counter", "bars"])
+    p.add_argument("--to", type=float, default=100, help="counter: final value")
+    p.add_argument("--frm", type=float, default=0, help="counter: starting value")
+    p.add_argument("--suffix", default="", help="counter: text after the number, e.g. %%")
+    p.add_argument("--label", help="counter: caption in a pill under the number")
+    p.add_argument("--data", help="bars: 'Название=30,Другое=70'")
+    p.add_argument("--title", help="bars: headline above the chart")
+    p.add_argument("--highlight", type=int, help="bars: which bar gets the accent colour")
+    p.add_argument("--dur", type=float, default=2.5)
+    p.add_argument("--fps", type=int, default=30)
+    p.add_argument("--width", type=int)
+    p.add_argument("--height", type=int)
+    p.add_argument("--font", default="onest", choices=["onest", "golos", "montserrat"])
+    p.add_argument("--out")
+    p.set_defaults(fn=charts.cmd_chart)
 
     p = sub.add_parser("cover", help="pick the best frame and make a preview still")
     p.add_argument("source")

@@ -1,6 +1,6 @@
 ---
 name: video-edit
-description: Edit and assemble footage the user has already shot — cut filler words, dead air, repeated verbal tics and bad takes, burn word-level captions, auto-grade the picture, fix and sharpen the voice, add graphic overlays, and render a finished vertical short. Fully local and free (MLX Whisper on Metal + ffmpeg); no cloud, no API keys, no paid services. Use whenever the user wants to монтировать / смонтировать / нарезать / собрать ролик / сделать шортс, edit or cut a video, remove pauses or "эээ"/"um", make a jump-cut edit, add subtitles or captions, improve video or audio quality of a clip, reframe 16:9 to 9:16, assemble clips into one film, or fix loudness on a video.
+description: Edit and assemble footage the user has already shot — cut filler words, dead air, repeated verbal tics and bad takes, burn word-level captions, auto-grade the picture, fix and sharpen the voice, add graphic overlays, draw animated data charts, make a cover still, and render a finished vertical short. Fully local and free (MLX Whisper on Metal + ffmpeg); no cloud, no API keys, no paid services. Use whenever the user wants to монтировать / смонтировать / нарезать / собрать ролик / сделать шортс, edit or cut a video, remove pauses or "эээ"/"um", make a jump-cut edit, add subtitles or captions, improve video or audio quality of a clip, reframe 16:9 to 9:16, assemble clips into one film, fix loudness, draw a chart or animation for a video, or make a preview/cover image for a clip.
 ---
 
 # video-edit — локальный монтажный движок
@@ -389,6 +389,37 @@ $VE render edl.json --no-reframe       # или выключить
 
 Реврейм не нужен, если снято сразу вертикально: исходник уже нужного
 соотношения, `crop_box` это видит и возвращает кадр как есть.
+
+## Графики и анимация (`chart`)
+
+```
+$VE chart counter --to 70 --label "машин в компании" --dur 2.5
+$VE chart bars --data "Консалтинг=30,Разработка=70" --title "куда идёт компания"
+```
+
+Рисуются Pillow **в том же стиле, что и субтитры** — тот же Onest, та же плашка
+акцента. Поэтому график читается как часть фильма, а не как вставка из чужой
+программы. На выходе обычный mp4.
+
+Вставляется существующим механизмом перебивки: `v_src` берёт картинку из графика,
+звук остаётся ваш. Разрежь клип натрое — до, график, после:
+
+```json
+{"src": "take.mp4", "in": 43.16, "out": 47.40},
+{"src": "take.mp4", "in": 47.40, "out": 49.90,
+ "v_src": "/abs/chart.mp4", "v_in": 0.0, "captions": false},
+{"src": "take.mp4", "in": 49.90, "out": 51.36}
+```
+
+**Ставь `"captions": false` на клипе с графиком.** Иначе субтитр повторит те же
+слова, что уже написаны на картинке, — получается каша.
+
+Длительность врезки делай **не длиннее графика**, иначе последний кадр замрёт.
+
+Почему свой рендер, а не готовая библиотека: Manim ставится тяжело и рендерит
+медленно, Matplotlib выглядит по-научному и требует долгой правки под вертикаль,
+Remotion тянет Node и headless Chromium. Свой на Pillow весит ноль лишнего и сразу
+совпадает по стилю.
 
 ## Обложка (`cover`)
 
