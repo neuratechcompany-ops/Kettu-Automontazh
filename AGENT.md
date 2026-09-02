@@ -137,10 +137,19 @@ source is already vertical it does nothing.
 
 ## Charts
 
+Seven kinds: `counter`, `bars`, `donut`, `line`, `list`, `timeline`, `swarm`.
+
 ```
 automontazh chart counter --to 70 --label "machines" --dur 2.5
-automontazh chart bars --data "Consulting=30,Product=70" --title "where the company is going"
+automontazh chart list --data "Writes code;Buys ads;Edits video" --title "already working"
+automontazh chart swarm --text "SWARM INTELLIGENCE" --dur 4.5
 ```
+
+`swarm` is a metaphor rather than a chart: particles fly under boid rules, then pull
+into points sampled from the rendered text. It shows the move from noise to order,
+which no bar chart can say. Density decides whether it works — letters do not read
+below roughly 1400 particles.
+
 
 Drawn with Pillow in the caption's visual language — same font, same accent pill —
 so a chart reads as part of the film rather than an import from a plotting library.

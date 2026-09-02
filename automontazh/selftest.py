@@ -116,6 +116,16 @@ def cmd_selftest(args):
                                "--dur", "1.0", "--out", "edit/ch.mp4"])
         step("chart bars", ["chart", "bars", "--data", "А=30,Б=70",
                             "--dur", "1.0", "--out", "edit/cb.mp4"])
+        step("chart list", ["chart", "list", "--data", "Раз;Два;Три",
+                            "--dur", "1.0", "--out", "edit/cl.mp4"])
+        step("chart line", ["chart", "line", "--data", "4,9,18,70",
+                            "--dur", "1.0", "--out", "edit/cn.mp4"])
+        step("chart donut", ["chart", "donut", "--to", "70",
+                             "--dur", "1.0", "--out", "edit/cd.mp4"])
+        step("chart timeline", ["chart", "timeline", "--data", "2023=А;2024=Б",
+                                "--dur", "1.0", "--out", "edit/ct.mp4"])
+        step("chart swarm", ["chart", "swarm", "--text", "РОЙ", "--particles", "400",
+                             "--dur", "1.0", "--out", "edit/cs.mp4"])
         step("reframe track", ["reframe", "take.mp4", "--to", "1080x1920"])
         step("render with reframe", ["render", "b.json", "--reframe"])
 
