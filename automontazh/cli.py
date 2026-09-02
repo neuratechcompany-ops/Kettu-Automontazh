@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from .core import OUT, FFMPEG, FFPROBE, die, hhmmss, log, probe, VIDEO_EXT, AUDIO_EXT  # noqa: E402
-from . import analyze, asr, captions, enhance, reframe, render  # noqa: E402
+from . import analyze, asr, captions, cover, enhance, reframe, render  # noqa: E402
 from . import cards, selftest, shorts, voice  # noqa: E402
 
 
@@ -200,6 +200,26 @@ def main():
     p.add_argument("--threshold", type=float, default=10.0)
     p.add_argument("--limit", type=int, default=60)
     p.set_defaults(fn=analyze.cmd_scenes)
+
+    p = sub.add_parser("cover", help="pick the best frame and make a preview still")
+    p.add_argument("source")
+    p.add_argument("--text", help="headline drawn on the cover")
+    p.add_argument("--accent", help="one word from --text to put in a filled pill")
+    p.add_argument("--at", type=float, help="use this timestamp instead of searching")
+    p.add_argument("--start", type=float)
+    p.add_argument("--end", type=float)
+    p.add_argument("--width", type=int)
+    p.add_argument("--height", type=int)
+    p.add_argument("--font", default="onest", choices=["onest", "golos", "montserrat"])
+    p.add_argument("--text-scale", type=float, default=13.0,
+                   help="short side / N = type size; bigger N = smaller type")
+    p.add_argument("--no-grade", action="store_true", help="skip the auto grade")
+    p.add_argument("--grade-strength", type=float, default=1.0)
+    p.add_argument("--no-face-band", action="store_true")
+    p.add_argument("--shortlist", type=int, metavar="N",
+                   help="contact sheet of the N best frames instead of one cover")
+    p.add_argument("--out")
+    p.set_defaults(fn=cover.cmd_cover)
 
     p = sub.add_parser("frames", help="contact sheet (filmstrip + waveform)")
     p.add_argument("source")

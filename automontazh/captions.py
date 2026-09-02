@@ -25,8 +25,8 @@ STYLES = {
                      primary="&H00FFFFFF", hi=None, outline_c="&H00000000",
                      border=1, pop=False),
     # Reference look: clean bold sans, white caps, emphasis as a filled pill.
-    "chip": dict(font="Montserrat", font_file="Montserrat-ExtraBold.ttf",
-                 h_div=10.5, bold=-1, outline=0, shadow=2, marginv=0.165,
+    "chip": dict(font="Onest", font_file="Onest-ExtraBold.ttf",
+                 h_div=13.5, bold=-1, outline=0, shadow=2, marginv=0.155,
                  upper=True, max_words=3, max_dur=2.4,
                  primary="&H00FFFFFF", hi=None, outline_c="&H00000000",
                  border=1, pop=False, pill="#4B41A5", pill_pad=0.30,
@@ -117,7 +117,7 @@ def chunk(words, st):
 def build_ass(edl, root=".", style_name=None):
     cfg = edl.get("captions") or {}
     st = dict(STYLES.get(style_name or cfg.get("style") or "hormozi", STYLES["hormozi"]))
-    for k in ("font", "max_words", "marginv"):
+    for k in ("font", "font_file", "max_words", "marginv", "h_div", "pill"):
         if cfg.get(k) is not None:
             st[k] = cfg[k]
     W, H = edl["canvas"]["w"], edl["canvas"]["h"]
