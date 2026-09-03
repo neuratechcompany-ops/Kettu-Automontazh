@@ -97,6 +97,16 @@ Run them and read the numbers before promising anything. A common surprise: phon
 footage usually has a 40+ dB signal-to-noise ratio, so a denoiser has nothing to
 do — the real problem is a dull, boomy tone, which is an EQ problem.
 
+## Low frame-rate sources
+
+Phone and messenger footage often arrives at 16–20 fps. Delivered at 30 it simply
+repeats frames and the motion judders. `--interpolate` synthesises the in-between
+frames instead, at roughly 4x the render time, and is skipped automatically when the
+source is already fast enough.
+
+Verify it by measuring, not by looking at a still: the share of near-identical
+neighbouring frames drops from about 31% to about 3%.
+
 ## Captions
 
 Built from word-level ASR; a word lights up exactly when it is spoken.

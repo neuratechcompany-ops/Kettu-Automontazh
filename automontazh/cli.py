@@ -317,6 +317,9 @@ def main():
     p.add_argument("--no-reframe", action="store_true")
     p.add_argument("--grade", default=None, help="override the EDL grade (e.g. auto)")
     p.add_argument("--cards", action="store_true", help="auto listicle cards")
+    p.add_argument("--interpolate", action="store_true",
+                   help="synthesise in-between frames for low-fps footage (~4x slower)")
+    p.add_argument("--no-interpolate", action="store_true")
     p.add_argument("--voice", action="store_true", help="measured voice EQ chain")
     p.add_argument("--no-voice", action="store_true")
     p.set_defaults(fn=render.cmd_render)

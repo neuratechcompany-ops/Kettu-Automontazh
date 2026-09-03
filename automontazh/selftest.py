@@ -149,6 +149,16 @@ def cmd_selftest(args):
         results.append(("ass override tags survive escaping", ok_esc, []))
         OUT.say(f"  {'ok  ' if ok_esc else 'FAIL'} ass override tags survive escaping")
 
+        from . import core as _core
+        low = {"fps": 16.4, "w": 720, "h": 1280}
+        cv = {"w": 1080, "h": 1920, "fps": 30}
+        ok_i = ("minterpolate" in _core.video_chain(low, cv, interpolate=True)
+                and "minterpolate" not in _core.video_chain(low, cv, interpolate=False)
+                and "minterpolate" not in _core.video_chain(
+                    {"fps": 30, "w": 720, "h": 1280}, cv, interpolate=True))
+        results.append(("interpolation only when the source is slower", ok_i, []))
+        print(f"  {'ok  ' if ok_i else 'FAIL'} interpolation only when the source is slower")
+
         from . import asr as _asr
         mk = [{"w": w, "s": i * 0.5, "e": i * 0.5 + 0.4, "p": 1.0} for i, w in
               enumerate(["Но", "на", "самом", "деле", "это", "важно", "и",

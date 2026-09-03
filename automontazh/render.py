@@ -114,6 +114,7 @@ def _key(clip, edl):
             stats += [f, int(st.st_mtime), st.st_size]
     blob = json.dumps([clip, edl["canvas"], edl.get("grade"), edl.get("fit"),
                        bool(edl.get("reframe")),
+                       bool(edl.get("interpolate")),
                        edl.get("audio", {}).get("voice"),
                        edl.get("audio", {}).get("voice_strength", 1.0),
                        edl.get("audio", {}).get("fade_ms", 30),
@@ -161,7 +162,8 @@ def render_clip(idx, clip, edl, wd):
         grade, pre = prof["grade"], prof["pre"]
 
     vf = video_chain(v_info, edl["canvas"], grade,
-                     clip.get("fit") or edl.get("fit", "pad"), clip.get("vf"), rf_box, pre)
+                     clip.get("fit") or edl.get("fit", "pad"), clip.get("vf"), rf_box, pre,
+                     bool(edl.get("interpolate")))
     # STARTPTS normalisation is mandatory after a seek: without it the first
     # frame keeps a non-zero pts and -t silently drops a frame per clip.
     vf = (f"setpts=(PTS-STARTPTS)/{speed:.6f}," if abs(speed - 1.0) > 1e-3
@@ -254,6 +256,10 @@ def cmd_render(args):
         edl["grade"] = args.grade
     if getattr(args, "cards", False):
         edl["auto_cards"] = True
+    if getattr(args, "interpolate", False):
+        edl["interpolate"] = True
+    if getattr(args, "no_interpolate", False):
+        edl["interpolate"] = False
     if getattr(args, "voice", False):
         edl.setdefault("audio", {})["voice"] = "auto"
     if getattr(args, "no_voice", False):
@@ -269,6 +275,13 @@ def cmd_render(args):
     n = len(edl["clips"])
     total_src = sum(c["out"] - c["in"] for c in edl["clips"])
     log(f"{n} clips, {hhmmss(total_src, ms=False)} of source -> {edl['output']}")
+    if not edl.get("interpolate"):
+        slow = {c["src"] for c in edl["clips"]
+                if (probe(c["src"]).get("fps") or 99) < edl["canvas"]["fps"] - 4}
+        if slow:
+            log(f"исходник снят на {probe(list(slow)[0])['fps']} к/с при выводе "
+                f"{edl['canvas']['fps']} — движение будет дёргаться. "
+                f"`--interpolate` достроит кадры (примерно 4x времени рендера)")
     if args.dry_run:
         for i, c in enumerate(edl["clips"]):
             log(f"[{i:3d}] {hhmmss(c['in'])}–{hhmmss(c['out'])}  "

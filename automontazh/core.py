@@ -206,9 +206,15 @@ def filter_path(p):
 
 # Filter order is a hard rule: geometry -> denoise/grade -> sharpen -> fps -> format
 def video_chain(info, canvas, grade="neutral", fit="pad", extra=None, reframe=None,
-                pre=None):
+                pre=None, interpolate=False):
     w, h, fps = canvas["w"], canvas["h"], canvas["fps"]
     f = []
+    if interpolate and info.get("fps") and info["fps"] < fps - 0.5:
+        # Synthesised in-between frames, at source resolution because it is the
+        # most expensive filter in the chain -- roughly 4x realtime. Only worth it
+        # when the source is genuinely below the delivery rate.
+        f.append(f"minterpolate=fps={fps}:mi_mode=mci:mc_mode=aobmc:"
+                 f"me_mode=bidir:vsbmc=1")
     if pre:
         f.append(pre)   # denoise belongs at native resolution, before any scale
     if info.get("rotation"):
