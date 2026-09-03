@@ -52,6 +52,18 @@ def ease_out(t):
     return 1 - (1 - t) ** 3
 
 
+def ease_in_out(t):
+    """Soft at both ends — how an element should arrive, not slam into place."""
+    t = max(0.0, min(1.0, t))
+    return 4 * t ** 3 if t < 0.5 else 1 - (-2 * t + 2) ** 3 / 2
+
+
+def lerp(a, b, t):
+    """Blend two colours. Fading toward the surface reads as a fade-in."""
+    t = max(0.0, min(1.0, t))
+    return tuple(int(round(x + (y - x) * t)) for x, y in zip(a, b))
+
+
 def _font(name, size):
     from PIL import ImageFont
     return ImageFont.truetype(str(FONTS / FONTMAP.get(name, FONTMAP["onest"])), size)
@@ -84,9 +96,22 @@ def _pipe(frames, W, H, fps, out):
             "\n".join(err.strip().splitlines()[-12:]))
 
 
+# Pillow draws without antialiasing, so circles and rounded corners come out with
+# stepped edges. Rendering at a multiple and downscaling with Lanczos is the cheap
+# fix and the single biggest difference between "jagged" and "smooth".
+SS = 2
+
+
 def _canvas(W, H):
     from PIL import Image
     return Image.new("RGB", (W, H), BG)
+
+
+def _downscale(frames, W, H):
+    from PIL import Image
+    if frames and frames[0].size == (W, H):
+        return frames
+    return [f.resize((W, H), Image.LANCZOS) for f in frames]
 
 
 def _fit(draw, text, font_name, max_w, start_size):
@@ -191,7 +216,8 @@ def cmd_chart(args):
               "swarm": render_swarm}
     if args.kind not in render:
         die(f"неизвестный тип графика: {args.kind}")
-    frames = render[args.kind](args, W, H, fps)
+    ss = max(1, int(getattr(args, "ss", SS)))
+    frames = _downscale(render[args.kind](args, W * ss, H * ss, fps), W, H)
 
     out = Path(args.out or f"edit/chart_{args.kind}.mp4")
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -248,18 +274,18 @@ def render_list(args, W, H, fps):
             hw = d.textlength(args.title.upper(), font=hf)
             d.text((W / 2 - hw / 2, top0 - H * 0.15), args.title.upper(), font=hf, fill=FG)
         for i, item in enumerate(items):
-            a = _stagger(i, len(items), prog)
+            a = ease_in_out(_stagger(i, len(items), prog))
             if a <= 0.01:
                 continue
             y = top0 + i * line_h + (1 - a) * line_h * 0.35     # slide up into place
             x = W * 0.11
-            d.ellipse([x, y, x + bullet, y + bullet], fill=ACCENT)
+            d.ellipse([x, y, x + bullet, y + bullet], fill=lerp(BG, ACCENT, a))
             num = str(i + 1)
             nw = d.textlength(num, font=nf)
             d.text((x + bullet / 2 - nw / 2, y + bullet / 2 - nf.size * 0.62),
                    num, font=nf, fill=FG)
             d.text((x + bullet + W * 0.045, y + bullet / 2 - item_f.size * 0.62),
-                   item.upper(), font=item_f, fill=FG if a > 0.75 else MUTED)
+                   item.upper(), font=item_f, fill=lerp(BG, FG, a))
         frames.append(img)
     return frames
 
@@ -397,7 +423,7 @@ def render_timeline(args, W, H, fps):
         d.line([(rail, top0 + step_h * 0.5), (rail, top0 + total - step_h * 0.5)],
                fill=TRACK, width=max(3, int(W / 220)))
         for i, (key, text) in enumerate(steps):
-            a = _stagger(i, len(steps), prog)
+            a = ease_in_out(_stagger(i, len(steps), prog))
             if a <= 0.01:
                 continue
             y = top0 + i * step_h + step_h * 0.5
@@ -405,11 +431,10 @@ def render_timeline(args, W, H, fps):
                 py = top0 + (i - 1) * step_h + step_h * 0.5
                 d.line([(rail, py), (rail, py + (y - py) * a)],
                        fill=ACCENT, width=max(3, int(W / 220)))
-            d.ellipse([rail - dot, y - dot, rail + dot, y + dot], fill=ACCENT)
+            d.ellipse([rail - dot, y - dot, rail + dot, y + dot], fill=lerp(BG, ACCENT, a))
             x = rail + dot + W * 0.05
-            d.text((x, y - kf.size * 1.15), key, font=kf, fill=MUTED)
-            d.text((x, y + body_f.size * 0.05), text, font=body_f,
-                   fill=FG if a > 0.7 else MUTED)
+            d.text((x, y - kf.size * 1.15), key, font=kf, fill=lerp(BG, MUTED, a))
+            d.text((x, y + body_f.size * 0.05), text, font=body_f, fill=lerp(BG, FG, a))
         frames.append(img)
     return frames
 
@@ -459,7 +484,7 @@ def render_swarm(args, W, H, fps):
     pos = rng.uniform([0, 0], [W, H], size=(N, 2))
     vel = rng.normal(0, W * 0.004, size=(N, 2))
     link_r = W * 0.085
-    dot_r = max(1.6, W / 520)
+    dot_r = max(1.8, W / 460)
 
     frames = []
     for k in range(n):

@@ -212,8 +212,10 @@ def main():
     p.add_argument("--title", help="headline above the chart")
     p.add_argument("--labels", help="line: axis labels, comma separated")
     p.add_argument("--text", help="swarm: the words the swarm forms")
-    p.add_argument("--particles", type=int, default=1400)
+    p.add_argument("--particles", type=int, default=2200)
     p.add_argument("--seed", type=int, default=7)
+    p.add_argument("--ss", type=int, default=2,
+                   help="supersampling: 1 = off, 2 = smooth (default), 3 = slower")
     p.add_argument("--highlight", type=int, help="bars: which bar gets the accent colour")
     p.add_argument("--dur", type=float, default=2.5)
     p.add_argument("--fps", type=int, default=30)

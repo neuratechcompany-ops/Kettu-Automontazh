@@ -145,6 +145,11 @@ automontazh chart list --data "Writes code;Buys ads;Edits video" --title "alread
 automontazh chart swarm --text "SWARM INTELLIGENCE" --dur 4.5
 ```
 
+Everything renders at 2x and downscales (`--ss`). Pillow does not antialias, and
+without this the circles and rounded corners come out stepped — that is the single
+biggest difference between "jagged" and "smooth". Elements arrive with an ease-in-out
+and a colour fade from the surface, never a jump cut.
+
 `swarm` is a metaphor rather than a chart: particles fly under boid rules, then pull
 into points sampled from the rendered text. It shows the move from noise to order,
 which no bar chart can say. Density decides whether it works — letters do not read

@@ -24,7 +24,7 @@ GRID = "#1C2436"
 # Type on a phone-sized vertical frame has to be several times what a report would
 # use. These are all derived from frame height so 1080x1920 and 1920x1080 agree.
 def TICK(H):
-    return max(16, H / 62)
+    return max(18, H / 54)
 
 
 def LEGEND(H):
@@ -75,7 +75,7 @@ def _setup(W, H):
     dpi = 100
     fig = plt.figure(figsize=(W / dpi, H / dpi), dpi=dpi)
     # the plot lives in the middle band: captions and platform UI own the edges
-    ax = fig.add_axes([0.145, 0.30, 0.75, 0.40])
+    ax = fig.add_axes([0.155, 0.255, 0.75, 0.49])
     ax.tick_params(pad=max(6, H / 200))
     return plt, fig, ax
 
@@ -93,7 +93,7 @@ def _title(fig, text, H, W):
     if not text:
         return
     size = max(20, H / 38)
-    t = fig.text(0.5, 0.755, text.upper(), ha="center", va="center",
+    t = fig.text(0.5, 0.795, text.upper(), ha="center", va="center",
                  fontsize=size, color=INK)
     fig.canvas.draw()
     for _ in range(14):
@@ -208,7 +208,7 @@ def render_heat(args, W, H, fps):
         die("в тепловой карте все строки должны быть одной длины")
     longest = max(len(nm) for nm, _ in rows)
     left = min(0.42, 0.145 + longest * TICK(H) * 0.62 / W)   # room for row labels
-    ax.set_position([left, 0.30, min(0.95 - left, 0.88), 0.40])
+    ax.set_position([left, 0.255, min(0.95 - left, 0.86), 0.49])
     cmap = LinearSegmentedColormap.from_list("solo", ["#16203a", charts.SOLO])
     cols = [x.strip().upper() for x in (args.labels or "").split(",") if x.strip()]
 
