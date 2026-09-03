@@ -124,6 +124,9 @@ def cmd_selftest(args):
                              "--dur", "1.0", "--out", "edit/cd.mp4"])
         step("chart timeline", ["chart", "timeline", "--data", "2023=А;2024=Б",
                                 "--dur", "1.0", "--out", "edit/ct.mp4"])
+        for th in ("night", "glass", "paper", "bold"):
+            step(f"theme {th}", ["chart", "bars", "--data", "А=30,Б=70", "--theme", th,
+                                 "--dur", "0.4", "--out", f"edit/th_{th}.mp4"])
         step("chart swarm", ["chart", "swarm", "--text", "РОЙ", "--particles", "400",
                              "--dur", "1.0", "--out", "edit/cs.mp4"])
         import importlib.util

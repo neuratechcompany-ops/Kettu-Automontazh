@@ -31,8 +31,9 @@ FG = (255, 255, 255)
 # The ORDER is the safety mechanism, not decoration: re-ordering these hues
 # breaks the adjacent-pair gates (putting violet next to blue drops CVD ΔE to
 # 1.9). Leave the sequence alone.
-SERIES = ["#3987e5", "#d95926", "#199e70", "#c98500",
-          "#d55181", "#008300", "#9085e9", "#e66767"]
+SERIES_DARK = ["#3987e5", "#d95926", "#199e70", "#c98500",
+               "#d55181", "#008300", "#9085e9", "#e66767"]
+SERIES = SERIES_DARK
 # A lone series has no adjacent pair to clear, so the brand violet is free to
 # carry single-series charts; it passes band, chroma and contrast on its own.
 SOLO = "#9085e9"
@@ -66,6 +67,7 @@ def lerp(a, b, t):
 
 def _font(name, size):
     from PIL import ImageFont
+    size = max(8, int(round(size * type_scale())))
     return ImageFont.truetype(str(FONTS / FONTMAP.get(name, FONTMAP["onest"])), size)
 
 
@@ -101,10 +103,89 @@ def _pipe(frames, W, H, fps, out):
 # fix and the single biggest difference between "jagged" and "smooth".
 SS = 2
 
+# Light-mode steps of the same eight hues, in the same load-bearing order.
+SERIES_LIGHT = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100",
+                "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+
+# A theme is surface + ink + treatment. The palette is never invented per theme:
+# it is the documented order, stepped for that surface. Four of the light slots
+# sit under 3:1 contrast, which is legal only because every chart here carries
+# direct labels -- do not strip them from a light theme.
+THEMES = {
+    "dash": dict(on_accent="#FFFFFF", bg="#0B1220", ink="#FFFFFF", muted="#BEC6D6", track="#1C2436",
+                 solo="#9085e9", series="dark", card=None, glow=False),
+    "night": dict(on_accent="#FFFFFF", bg=("#171338", "#05060F"), ink="#FFFFFF", muted="#A9B0C7",
+                  track="#221E42", solo="#9085e9", series="dark",
+                  card=None, glow=True),
+    "glass": dict(on_accent="#FFFFFF", bg=("#1B1640", "#070912"), ink="#FFFFFF", muted="#B4BACF",
+                  track="#2A2550", solo="#9085e9", series="dark",
+                  card=dict(fill="#FFFFFF", alpha=16, radius=0.055, inset=0.055),
+                  glow=True),
+    "paper": dict(on_accent="#FFFFFF", bg="#F4F1EA", ink="#14151A", muted="#5A5C66", track="#DFDACE",
+                  solo="#4a3aa7", series="light", card=None, glow=False),
+    "bold": dict(on_accent="#FFFFFF", bg="#08080C", ink="#FFFFFF", muted="#8E93A6", track="#17181F",
+                 solo="#9085e9", series="dark", card=None, glow=False,
+                 type_scale=1.18),
+}
+
+_T = dict(THEMES["dash"])
+
+
+def apply_theme(name):
+    """Swap the whole visual system. Palette order is never touched."""
+    global BG, FG, MUTED, TRACK, ACCENT, SERIES, SOLO, _T
+    if name not in THEMES:
+        die(f"тема {name!r} неизвестна; есть: {', '.join(THEMES)}")
+    _T = dict(THEMES[name])
+    BG = rgb(_T["bg"][1] if isinstance(_T["bg"], tuple) else _T["bg"])
+    FG = rgb(_T["ink"])
+    MUTED = rgb(_T["muted"])
+    TRACK = rgb(_T["track"])
+    SOLO = _T["solo"]
+    ACCENT = rgb(SOLO)
+    SERIES = SERIES_LIGHT if _T["series"] == "light" else SERIES_DARK
+
+
+def type_scale():
+    return float(_T.get("type_scale", 1.0))
+
+
+def on_accent():
+    return rgb(_T.get("on_accent", "#FFFFFF"))
+
 
 def _canvas(W, H):
-    from PIL import Image
-    return Image.new("RGB", (W, H), BG)
+    """Background per theme: flat, vertical gradient, and an optional glass card."""
+    from PIL import Image, ImageDraw, ImageFilter
+    bg = _T["bg"]
+    if isinstance(bg, tuple):
+        import numpy as np
+        top, bot = np.array(rgb(bg[0]), float), np.array(rgb(bg[1]), float)
+        t = np.linspace(0, 1, H)[:, None, None] ** 0.85
+        img = Image.fromarray((top + (bot - top) * t).repeat(W, 1).astype("uint8"), "RGB")
+    else:
+        img = Image.new("RGB", (W, H), rgb(bg))
+
+    if _T.get("glow"):
+        layer = Image.new("RGB", (W, H), (0, 0, 0))
+        gd = ImageDraw.Draw(layer)
+        r = min(W, H) * 0.42
+        gd.ellipse([W / 2 - r, H * 0.40 - r, W / 2 + r, H * 0.40 + r], fill=rgb(SOLO))
+        layer = layer.filter(ImageFilter.GaussianBlur(min(W, H) * 0.13))
+        img = Image.blend(img, Image.blend(img, layer, 0.28), 1.0)
+
+    card = _T.get("card")
+    if card:
+        ins = card["inset"]
+        box = [W * ins, H * 0.16, W * (1 - ins), H * 0.84]
+        overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        od = ImageDraw.Draw(overlay)
+        od.rounded_rectangle(box, radius=int(min(W, H) * card["radius"]),
+                             fill=(*rgb(card["fill"]), card["alpha"]),
+                             outline=(*rgb(card["fill"]), card["alpha"] + 22),
+                             width=max(2, int(W / 500)))
+        img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+    return img
 
 
 def _downscale(frames, W, H):
@@ -151,7 +232,7 @@ def render_counter(args, W, H, fps):
             d.rounded_rectangle([W / 2 - lw / 2 - pad, ly - lf.size * 0.18,
                                  W / 2 + lw / 2 + pad, ly + lf.size * 1.18],
                                 radius=int(lf.size * 0.42), fill=ACCENT)
-            d.text((W / 2 - lw / 2, ly), label, font=lf, fill=FG)
+            d.text((W / 2 - lw / 2, ly), label, font=lf, fill=on_accent())
         frames.append(img)
     return frames
 
@@ -189,20 +270,20 @@ def render_bars(args, W, H, fps):
             d.text((W / 2 - tw / 2, top_y - H * 0.13), args.title.upper(), font=tf, fill=FG)
         for j, (name, val) in enumerate(pairs):
             y = top_y + j * (bh + gap)
-            d.text((left, y - lf.size * 1.25), name, font=lf, fill=(190, 198, 214))
+            d.text((left, y - lf.size * 1.25), name, font=lf, fill=MUTED)
             d.rounded_rectangle([left, y, right, y + bh],
-                                radius=int(bh / 2), fill=(28, 36, 54))
+                                radius=int(bh / 2), fill=TRACK)
             w = (right - left) * (val / top) * prog
             if w > bh * 0.6:
                 colour = ACCENT if j == (args.highlight if args.highlight is not None
-                                         else len(pairs) - 1) else (58, 74, 110)
+                                         else len(pairs) - 1) else lerp(TRACK, ACCENT, 0.34)
                 d.rounded_rectangle([left, y, left + w, y + bh],
                                     radius=int(bh / 2), fill=colour)
                 shown = f"{val * prog:,.0f}".replace(",", " ")
                 sw = d.textlength(shown, font=vf)
                 if sw + bh * 0.6 < w:
                     d.text((left + w - sw - bh * 0.4, y + bh / 2 - vf.size * 0.62),
-                           shown, font=vf, fill=FG)
+                           shown, font=vf, fill=on_accent())
         frames.append(img)
     return frames
 
@@ -216,6 +297,7 @@ def cmd_chart(args):
               "swarm": render_swarm}
     if args.kind not in render:
         die(f"неизвестный тип графика: {args.kind}")
+    apply_theme(getattr(args, "theme", "dash") or "dash")
     ss = max(1, int(getattr(args, "ss", SS)))
     frames = _downscale(render[args.kind](args, W * ss, H * ss, fps), W, H)
 
@@ -283,7 +365,7 @@ def render_list(args, W, H, fps):
             num = str(i + 1)
             nw = d.textlength(num, font=nf)
             d.text((x + bullet / 2 - nw / 2, y + bullet / 2 - nf.size * 0.62),
-                   num, font=nf, fill=FG)
+                   num, font=nf, fill=on_accent())
             d.text((x + bullet + W * 0.045, y + bullet / 2 - item_f.size * 0.62),
                    item.upper(), font=item_f, fill=lerp(BG, FG, a))
         frames.append(img)
@@ -379,7 +461,7 @@ def render_donut(args, W, H, fps):
             d.rounded_rectangle([W / 2 - lw / 2 - pad, ly - lf.size * 0.18,
                                  W / 2 + lw / 2 + pad, ly + lf.size * 1.18],
                                 radius=int(lf.size * 0.42), fill=ACCENT)
-            d.text((W / 2 - lw / 2, ly), lab, font=lf, fill=FG)
+            d.text((W / 2 - lw / 2, ly), lab, font=lf, fill=on_accent())
         frames.append(img)
     return frames
 
@@ -527,7 +609,7 @@ def render_swarm(args, W, H, fps):
                 dr.line([tuple(pos[a]), tuple(pos[b])],
                         fill=(int(c * 0.5), int(c * 0.5), min(255, c + 60)), width=1)
         r = dot_r * (1.0 + 0.55 * (0.0 if t < 0.42 else min(1.0, (t - 0.42) / 0.3)))
-        col = (150, 145, 235) if t < 0.42 else FG
+        col = lerp(BG, ACCENT, 0.85) if t < 0.42 else FG
         for x, y in pos:
             dr.ellipse([x - r, y - r, x + r, y + r], fill=col)
         frames.append(img)

@@ -214,6 +214,8 @@ def main():
     p.add_argument("--text", help="swarm: the words the swarm forms")
     p.add_argument("--particles", type=int, default=2200)
     p.add_argument("--seed", type=int, default=7)
+    p.add_argument("--theme", default="dash",
+                   choices=["dash", "night", "glass", "paper", "bold"])
     p.add_argument("--ss", type=int, default=2,
                    help="supersampling: 1 = off, 2 = smooth (default), 3 = slower")
     p.add_argument("--highlight", type=int, help="bars: which bar gets the accent colour")
