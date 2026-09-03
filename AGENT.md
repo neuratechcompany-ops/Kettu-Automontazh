@@ -216,6 +216,14 @@ choosing between visually different takes, confirming someone is in frame, hunti
 for a cutaway, or accepting the final result. Never scan the whole video — that is
 the cost this whole design exists to avoid.
 
+## Style references
+
+`docs/style/` holds the images behind the style rules — theme directions, the
+antialiasing before/after, grade strength on a 1:1 crop, cover candidates, caption
+faces. Each one settles a question that was decided by looking. Open them before
+changing a visual default; the rule in text is the conclusion, the picture is the
+evidence.
+
 ## Be honest about limits
 
 - One speaker per track; there is no diarisation.
