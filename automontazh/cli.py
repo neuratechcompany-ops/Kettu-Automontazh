@@ -169,6 +169,10 @@ def main():
     p.add_argument("--edl", default="edl.json")
     p.add_argument("--output", default="edit/final.mp4")
     p.add_argument("--max-gap", type=float, default=0.55, help="dead air that survives (s)")
+    p.add_argument("--keep-ending", type=float, default=3.0,
+                   help="keep up to N s after the last word — the landing, not dead air")
+    p.add_argument("--gentle", action="store_true",
+                   help="reflective material: let natural pauses breathe")
     p.add_argument("--lead", type=float, default=0.08)
     p.add_argument("--tail", type=float, default=0.14)
     p.add_argument("--min-clip", type=float, default=0.35)

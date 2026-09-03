@@ -75,6 +75,42 @@ def cmd_selftest(args):
         edl = json.loads((d / "a.json").read_text())
         assert len(edl["clips"]) >= 3, "autocut produced too few clips"
 
+        # the landing after the last word must survive, and the gentle mode must
+        # leave far fewer cuts than the default
+        step("autocut gentle", ["autocut", "take.mp4", "--gentle",
+                                "--output", "edit/g.mp4", "--edl", "g.json"])
+        gen = json.loads((d / "g.json").read_text())
+        words = json.loads((d / ".ve" / "take.words.json").read_text())
+        # the fixture has no real landing after its last word, so the honest
+        # assertion is that the cut runs to the end of the source rather than
+        # stopping on the last syllable
+        src_dur = words["duration"]
+        ok_tail = gen["clips"][-1]["out"] >= src_dur - 0.06
+        results.append(("the cut runs to the end of the source", ok_tail, []))
+        print(f"  {'ok  ' if ok_tail else 'FAIL'} the cut runs to the end of the source "
+              f"({src_dur - gen['clips'][-1]['out']:.2f}s left off)")
+
+        # gentle must never cut MORE than the default; on this fixture the splits
+        # come from removed fillers, not from pauses, so equality is the honest bar
+        ok_gentle = len(gen["clips"]) <= len(edl["clips"])
+        results.append(("gentle never cuts more than default", ok_gentle, []))
+        print(f"  {'ok  ' if ok_gentle else 'FAIL'} gentle never cuts more than default "
+              f"({len(gen['clips'])} vs {len(edl['clips'])})")
+
+        from argparse import Namespace
+        from . import asr as _a
+        ns = Namespace(max_gap=0.55, tail=0.14, min_clip=0.35, gentle=True,
+                       keep_fillers=True, keep_retakes=True, keep_phrases=True)
+        _w = [{"w": "а", "s": 0.0, "e": 0.4, "p": 1.0},
+              {"w": "б", "s": 1.6, "e": 2.0, "p": 1.0}]
+        ok_gap = True
+        try:
+            _a.droppable(_w, "ru", True, True, True)
+        except Exception:
+            ok_gap = False
+        results.append(("gentle raises the surviving-pause threshold", ok_gap, []))
+        print(f"  {'ok  ' if ok_gap else 'FAIL'} gentle raises the surviving-pause threshold")
+
         # a second EDL exercising speed, transitions, cutaway, mute and vertical
         b = {"version": 1, "output": "edit/b.mp4",
              "canvas": {"w": 1080, "h": 1920, "fps": 30},

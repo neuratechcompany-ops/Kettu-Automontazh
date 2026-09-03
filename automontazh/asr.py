@@ -247,6 +247,14 @@ def cmd_autocut(args):
     if not words:
         die("empty transcript")
     lang = (doc.get("language") or "ru")[:2]
+    if getattr(args, "gentle", False):
+        # A contemplative monologue lives in its pauses. Chopping them turns a
+        # thought into a stutter, so only the longest silences go.
+        args.max_gap = max(args.max_gap, 1.6)
+        args.tail = max(args.tail, 0.30)
+        args.min_clip = max(args.min_clip, 1.2)
+        log("бережный режим: паузы до 1.6с сохраняются")
+
     drop = droppable(words, lang, args.keep_fillers, args.keep_retakes,
                      getattr(args, "keep_phrases", False))
 
@@ -283,6 +291,15 @@ def cmd_autocut(args):
         clips.append({"src": src, "in": round(a, 3), "out": round(b, 3)})
     if not clips:
         die("no clip survived --min-clip")
+
+    # What follows the last word is usually the landing, not dead air: a breath,
+    # a smile, a beat before the frame ends. Cutting it makes a warm ending stop
+    # dead. Keep it when it is short.
+    tail_left = dur - clips[-1]["out"]
+    if 0 < tail_left <= args.keep_ending:
+        clips[-1]["out"] = round(dur, 3)
+        log(f"хвост {tail_left:.2f}с после последнего слова оставлен — это концовка, "
+            f"а не мёртвый воздух")
 
     total = sum(c["out"] - c["in"] for c in clips)
     edl = {
