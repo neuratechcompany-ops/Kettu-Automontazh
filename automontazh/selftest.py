@@ -135,6 +135,10 @@ def cmd_selftest(args):
                               "--dur", "0.6", "--out", "edit/va.mp4"])
             step("viz heat", ["viz", "heat", "--data", "А=1,2;Б=3,4",
                               "--dur", "0.6", "--out", "edit/vh.mp4"])
+            for th in ("glass", "paper"):
+                step(f"viz theme {th}", ["viz", "heat", "--data", "А=1,2;Б=3,4",
+                                         "--theme", th, "--dur", "0.4",
+                                         "--out", f"edit/vt_{th}.mp4"])
         else:
             print("  skip viz (matplotlib not installed)")
         step("reframe track", ["reframe", "take.mp4", "--to", "1080x1920"])

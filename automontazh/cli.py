@@ -230,6 +230,8 @@ def main():
     p = sub.add_parser("viz", help="matplotlib visualisation in the film's style")
     p.add_argument("kind", choices=["area", "scatter", "heat"])
     p.add_argument("--data", required=True, help="'Имя=1,2,3;Другое=4,5,6'")
+    p.add_argument("--theme", default="dash",
+                   choices=["dash", "night", "glass", "paper", "bold"])
     p.add_argument("--labels", help="подписи по оси X, через запятую")
     p.add_argument("--title")
     p.add_argument("--dur", type=float, default=3.0)

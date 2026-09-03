@@ -16,10 +16,27 @@ from .core import OUT, die, log
 from . import charts
 
 FONTS = Path(__file__).parent / "fonts"
-SURFACE = "#0B1220"
-INK = "#FFFFFF"
-INK_MUTED = "#BEC6D6"
-GRID = "#1C2436"
+def _hex(c):
+    return "#%02x%02x%02x" % tuple(c)
+
+
+# Colours are read from the active theme at draw time, never frozen at import:
+# a module-level constant is exactly how the matplotlib family drifted away from
+# the hand-drawn one in the first place.
+def INK():
+    return _hex(charts.FG)
+
+
+def MUTED():
+    return _hex(charts.MUTED)
+
+
+def GRID():
+    return _hex(charts.TRACK)
+
+
+def SURFACE():
+    return _hex(charts.BG)
 
 # Type on a phone-sized vertical frame has to be several times what a report would
 # use. These are all derived from frame height so 1080x1920 and 1920x1080 agree.
@@ -48,15 +65,15 @@ def _setup(W, H):
             font_manager.fontManager.addfont(str(p))
     plt.rcParams.update({
         "font.family": "Onest",
-        "figure.facecolor": SURFACE,
-        "axes.facecolor": SURFACE,
-        "savefig.facecolor": SURFACE,
-        "text.color": INK,
-        "axes.labelcolor": INK_MUTED,
-        "xtick.color": INK_MUTED,
-        "ytick.color": INK_MUTED,
-        "axes.edgecolor": GRID,
-        "grid.color": GRID,
+        "figure.facecolor": "none",
+        "axes.facecolor": "none",
+        "savefig.facecolor": "none",
+        "text.color": INK(),
+        "axes.labelcolor": MUTED(),
+        "xtick.color": MUTED(),
+        "ytick.color": MUTED(),
+        "axes.edgecolor": GRID(),
+        "grid.color": GRID(),
         "axes.grid": True,
         "axes.axisbelow": True,
         "axes.spines.top": False,
@@ -67,7 +84,7 @@ def _setup(W, H):
         "grid.linewidth": max(1.0, H / 1400),
         "lines.linewidth": max(3.0, H / 480),
         "legend.frameon": False,
-        "legend.labelcolor": INK_MUTED,
+        "legend.labelcolor": MUTED(),
         "legend.fontsize": LEGEND(H),
         "legend.handlelength": 1.6,
         "legend.handleheight": 1.1,
@@ -75,17 +92,22 @@ def _setup(W, H):
     dpi = 100
     fig = plt.figure(figsize=(W / dpi, H / dpi), dpi=dpi)
     # the plot lives in the middle band: captions and platform UI own the edges
+    fig.patch.set_alpha(0)
     ax = fig.add_axes([0.155, 0.255, 0.75, 0.49])
+    ax.patch.set_alpha(0)
     ax.tick_params(pad=max(6, H / 200))
     return plt, fig, ax
 
 
-def _to_image(fig):
+def _to_image(fig, W, H):
+    """Composite the transparent plot onto the theme's own background, so the
+    matplotlib family and the hand-drawn one share one surface exactly."""
     import numpy as np
     from PIL import Image
     fig.canvas.draw()
-    buf = np.asarray(fig.canvas.buffer_rgba())
-    return Image.fromarray(buf).convert("RGB")
+    plot = Image.fromarray(np.asarray(fig.canvas.buffer_rgba()), "RGBA")
+    base = charts._canvas(W, H).convert("RGBA")
+    return Image.alpha_composite(base, plot).convert("RGB")
 
 
 def _title(fig, text, H, W):
@@ -94,7 +116,7 @@ def _title(fig, text, H, W):
         return
     size = max(20, H / 38)
     t = fig.text(0.5, 0.795, text.upper(), ha="center", va="center",
-                 fontsize=size, color=INK)
+                 fontsize=size, color=INK())
     fig.canvas.draw()
     for _ in range(14):
         if t.get_window_extent(fig.canvas.get_renderer()).width <= W * 0.90:
@@ -135,8 +157,7 @@ def render_area(args, W, H, fps):
         shown = 1 + prog * (len(xs) - 1)
         cut = int(shown)
         ax.clear()
-        ax.set_facecolor(SURFACE)
-        ax.grid(True, color=GRID, linewidth=0.8)
+        ax.grid(True, color=GRID(), linewidth=0.8)
         ax.spines[["top", "right"]].set_visible(False)
         x_part = xs[:cut + 1]
         if len(x_part) > 1:
@@ -150,7 +171,7 @@ def render_area(args, W, H, fps):
             ax.stackplot(x_part, *series,
                          colors=charts.SERIES[:len(data)],
                          labels=[nm for nm, _ in data], alpha=0.95,
-                         edgecolor=SURFACE, linewidth=max(2, H / 640))
+                         edgecolor=SURFACE(), linewidth=max(2, H / 640))
         ax.set_xlim(0, len(xs) - 1)
         ax.set_ylim(0, top * 1.1)
         if labels:
@@ -159,7 +180,7 @@ def render_area(args, W, H, fps):
         if len(data) > 1:
             ax.legend(loc="upper left", fontsize=LEGEND(H), markerscale=1.4)
         _title(fig, args.title, H, W)
-        frames.append(_to_image(fig))
+        frames.append(_to_image(fig, W, H))
     plt.close(fig)
     return frames
 
@@ -182,18 +203,17 @@ def render_scatter(args, W, H, fps):
     for k in range(n):
         prog = charts.ease_out(min(1.0, (k / max(1, n - 1)) / 0.8))
         ax.clear()
-        ax.set_facecolor(SURFACE)
-        ax.grid(True, color=GRID, linewidth=0.8)
+        ax.grid(True, color=GRID(), linewidth=0.8)
         ax.spines[["top", "right"]].set_visible(False)
         for i, (name, xs, ys) in enumerate(pts):
             m = max(1, int(len(xs) * prog))
             ax.scatter(xs[:m], ys[:m], s=(H / 4.2), c=charts.SERIES[i],
-                       edgecolors=SURFACE, linewidths=max(2, H / 640),
+                       edgecolors=SURFACE(), linewidths=max(2, H / 640),
                        label=name, zorder=3)
         if len(pts) > 1:
             ax.legend(loc="upper left", fontsize=LEGEND(H), markerscale=1.4)
         _title(fig, args.title, H, W)
-        frames.append(_to_image(fig))
+        frames.append(_to_image(fig, W, H))
     plt.close(fig)
     return frames
 
@@ -209,7 +229,9 @@ def render_heat(args, W, H, fps):
     longest = max(len(nm) for nm, _ in rows)
     left = min(0.42, 0.145 + longest * TICK(H) * 0.62 / W)   # room for row labels
     ax.set_position([left, 0.255, min(0.95 - left, 0.86), 0.49])
-    cmap = LinearSegmentedColormap.from_list("solo", ["#16203a", charts.SOLO])
+    cmap = LinearSegmentedColormap.from_list(
+        "solo", [_hex(charts.lerp(charts.BG, charts.rgb(charts.SOLO), 0.12)),
+                 charts.SOLO])
     cols = [x.strip().upper() for x in (args.labels or "").split(",") if x.strip()]
 
     import numpy as np
@@ -219,7 +241,6 @@ def render_heat(args, W, H, fps):
     for k in range(n):
         prog = charts.ease_out(min(1.0, (k / max(1, n - 1)) / 0.8))
         ax.clear()
-        ax.set_facecolor(SURFACE)
         ax.grid(False)
         ax.spines[["top", "right", "left", "bottom"]].set_visible(False)
         ax.imshow(m * prog, cmap=cmap, aspect="auto",
@@ -233,7 +254,7 @@ def render_heat(args, W, H, fps):
             ax.set_xticks([])
         ax.tick_params(length=0)
         _title(fig, args.title, H, W)
-        frames.append(_to_image(fig))
+        frames.append(_to_image(fig, W, H))
     plt.close(fig)
     return frames
 
@@ -244,6 +265,7 @@ KINDS = {"area": render_area, "scatter": render_scatter, "heat": render_heat}
 def cmd_viz(args):
     W = args.width or 1080
     H = args.height or 1920
+    charts.apply_theme(getattr(args, "theme", "dash") or "dash")
     if args.kind not in KINDS:
         die(f"неизвестный тип: {args.kind}")
     frames = KINDS[args.kind](args, W, H, args.fps)
