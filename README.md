@@ -39,6 +39,10 @@ automontazh shorts take.mp4
 
 One command: transcribe, cut, grade, fix the voice, caption, render, verify.
 
+Style decisions — which themes, what "smooth" means, why the grade default is 0.6 —
+are recorded as images in [docs/style](docs/style/), each one the evidence behind a
+rule rather than an assertion about taste.
+
 For anything non-standard, work the pipeline step by step and edit the EDL — see
 [AGENT.md](AGENT.md), which is written for an agent to follow.
 
