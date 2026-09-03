@@ -77,9 +77,21 @@ def measure(src, root="."):
                 drops.append(float(seg[0] - seg[2]))
     reverb = float(np.median(drops)) if drops else 99.0
 
+    # Spectral flatness of the quiet windows separates hiss from music. Broadband
+    # noise is flat (~0.2-0.4); a tune or a hum is peaky (<0.1). It matters because
+    # a denoiser aimed at "noise" that is actually background music will mangle it,
+    # and the SNR figure itself is meaningless in that case.
+    if ns is not None:
+        band = (f >= 100) & (f <= 4000)
+        P = (ns[band] ** 2) + 1e-20
+        flatness = float(np.exp(np.log(P).mean()) / P.mean())
+    else:
+        flatness = 1.0
+
     return {"source": str(src), "sr": sr, "speech_dbfs": round(speech_db, 1),
             "noise_dbfs": round(noise_db, 1), "snr": round(speech_db - noise_db, 1),
-            "reverb_decay_db": round(reverb, 1), "bands": bands}
+            "reverb_decay_db": round(reverb, 1),
+            "noise_flatness": round(flatness, 4), "bands": bands}
 
 
 def build(m, strength=1.0):
@@ -109,11 +121,24 @@ def build(m, strength=1.0):
     if pts:
         chain.append("firequalizer=gain_entry='" + ";".join(pts) + "'")
 
-    if m["snr"] > 35:
+    # Three tiers, because the boundary is not sharp: a room with quiet music sits
+    # between clean hiss and a full backing track, and a denoiser tuned for hiss
+    # chews audible holes in the middle case.
+    fl = m.get("noise_flatness", 1.0)
+    if 0.10 <= fl < 0.20 and m["snr"] < 35:
+        chain.append("afftdn=nf=-20:tn=1")
+        notes.append(f"фон частично тональный (ровность {fl:.3f}) — шумодав мягкий, "
+                     f"чтобы не выесть музыку")
+    tonal = fl < 0.10
+    if tonal:
+        notes.append(f"фон тональный (ровность {m['noise_flatness']:.3f}) — это музыка "
+                     f"или гул, а не шум. Шумодав НЕ включаю: он её изуродует. "
+                     f"Цифра с/ш {m['snr']:.0f} дБ здесь ничего не значит")
+    elif m["snr"] > 35:
         notes.append(f"с/ш {m['snr']:.0f} дБ — шумодав не нужен")
-    else:
+    elif fl >= 0.20:
         chain.append("afftdn=nf=-28:tn=1")
-        notes.append(f"с/ш {m['snr']:.0f} дБ — включён шумодав")
+        notes.append(f"с/ш {m['snr']:.0f} дБ, фон широкополосный — включён шумодав")
 
     if max(g for _, _, g in gains) > 5:
         chain.append("deesser=i=0.35:m=0.5:f=0.18")
@@ -142,8 +167,9 @@ def cmd_voice(args):
     d = profile(args.source, args.root, args.force, args.strength)
     m = d["measured"]
     OUT.emit(measured=m, chain=d["chain"], notes=d["notes"], gains=d["gains"])
-    OUT.say(f"речь {m['speech_dbfs']} dBFS · шум {m['noise_dbfs']} dBFS · "
-          f"с/ш {m['snr']} дБ · спад после слова {m['reverb_decay_db']} дБ")
+    OUT.say(f"речь {m['speech_dbfs']} dBFS · фон {m['noise_dbfs']} dBFS · "
+            f"с/ш {m['snr']} дБ · ровность фона {m.get('noise_flatness')} · "
+            f"спад после слова {m['reverb_decay_db']} дБ")
     OUT.say("\n  полоса          есть   цель   правка")
     for b, (lo, hi, g) in zip(m["bands"], d["gains"]):
         OUT.say(f"  {b['lo']:>5}-{b['hi']:<6} {b['measured']:+7.1f} {b['target']:+6.1f}  {g:+6.1f}")

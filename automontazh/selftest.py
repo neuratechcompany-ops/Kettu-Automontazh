@@ -173,12 +173,22 @@ def cmd_selftest(args):
         bands = [{"lo": 60, "hi": 100, "target": -12.0, "measured": -20.0, "noise_dbfs": -80},
                  {"lo": 100, "hi": 160, "target": 0.0, "measured": -9.0, "noise_dbfs": -80},
                  {"lo": 2500, "hi": 4000, "target": -11.0, "measured": -27.0, "noise_dbfs": -70}]
-        _c, _n, gains = _v.build({"snr": 45.0, "bands": bands}, 1.0)
+        _c, _n, gains = _v.build({"snr": 45.0, "noise_flatness": 0.35, "bands": bands}, 1.0)
         low = {(lo, hi): g for lo, hi, g in gains}
         ok_v = low[(60, 100)] <= 0 and low[(100, 160)] <= 0 and low[(2500, 4000)] > 5
         results.append(("rumble bands are never boosted", ok_v, []))
         OUT.say(f"  {'ok  ' if ok_v else 'FAIL'} rumble bands are never boosted "
               f"(60-100 {low[(60, 100)]:+.1f}, 2.5-4k {low[(2500, 4000)]:+.1f})")
+
+        # a tonal background is music or hum, not noise: the denoiser must stand down
+        tonal = _v.build({"snr": 10.0, "noise_flatness": 0.01, "bands": bands}, 1.0)
+        mid = _v.build({"snr": 20.0, "noise_flatness": 0.15, "bands": bands}, 1.0)
+        broad = _v.build({"snr": 20.0, "noise_flatness": 0.35, "bands": bands}, 1.0)
+        ok_t = ("afftdn" not in tonal[0]
+                and "afftdn=nf=-20" in mid[0]
+                and "afftdn=nf=-28" in broad[0])
+        results.append(("denoiser stands down on a tonal background", ok_t, []))
+        print(f"  {'ok  ' if ok_t else 'FAIL'} denoiser stands down on a tonal background")
 
         ok_nd = "afftdn" not in _c      # 45 dB SNR: nothing for a denoiser to do
         results.append(("clean audio gets no denoiser", ok_nd, []))
