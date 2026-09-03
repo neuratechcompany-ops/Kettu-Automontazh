@@ -17,6 +17,7 @@ dependencies = [
 mlx = ["mlx-whisper>=0.4"]          # Apple Silicon: GPU via Metal
 faster = ["faster-whisper>=1.0"]    # everything else: CPU, CUDA on Linux
 fonts = ["fonttools>=4.50"]         # only to add new fonts
+viz = ["matplotlib>=3.8"]           # area / scatter / heatmap visualisations
 
 [project.scripts]
 automontazh = "automontazh.cli:main"

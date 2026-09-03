@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from .core import OUT, FFMPEG, FFPROBE, die, hhmmss, log, probe, VIDEO_EXT, AUDIO_EXT  # noqa: E402
-from . import analyze, asr, captions, charts, cover, enhance, reframe, render  # noqa: E402
+from . import analyze, asr, captions, charts, cover, enhance, reframe, render, viz  # noqa: E402
 from . import cards, selftest, shorts, voice  # noqa: E402
 
 
@@ -222,6 +222,18 @@ def main():
     p.add_argument("--font", default="onest", choices=["onest", "golos", "montserrat"])
     p.add_argument("--out")
     p.set_defaults(fn=charts.cmd_chart)
+
+    p = sub.add_parser("viz", help="matplotlib visualisation in the film's style")
+    p.add_argument("kind", choices=["area", "scatter", "heat"])
+    p.add_argument("--data", required=True, help="'Имя=1,2,3;Другое=4,5,6'")
+    p.add_argument("--labels", help="подписи по оси X, через запятую")
+    p.add_argument("--title")
+    p.add_argument("--dur", type=float, default=3.0)
+    p.add_argument("--fps", type=int, default=30)
+    p.add_argument("--width", type=int)
+    p.add_argument("--height", type=int)
+    p.add_argument("--out")
+    p.set_defaults(fn=viz.cmd_viz)
 
     p = sub.add_parser("cover", help="pick the best frame and make a preview still")
     p.add_argument("source")

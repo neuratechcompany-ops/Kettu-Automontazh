@@ -159,6 +159,24 @@ sound running underneath. Split the clip in three: before, chart, after.
 Set `"captions": false` on the chart clip, or the subtitle repeats words the graphic
 already shows. Keep the cutaway no longer than the chart, or its last frame freezes.
 
+## Heavier visualisations (`viz`)
+
+`chart` covers the shapes a talking-head short needs. `viz` is the matplotlib
+backend for the rest — stacked area, scatter, heatmap — dressed in the same
+surface, palette and type, and installed separately with `[viz]`.
+
+The categorical palette is **computed, not chosen**: the eight dark-surface slots
+pass the dataviz validator on #0B1220 for lightness band, chroma, colour-blind
+separation and 3:1 contrast. **Do not re-order them** — the order is the safety
+mechanism; moving violet to slot 1 drops its pair with blue to ΔE 1.9 against a
+floor of 8. The caption pill's #4B41A5 is not a legal data mark (L 0.444, 2.32:1);
+a single series uses #9085e9 instead. Scatter caps at three series.
+
+Two failures worth remembering, both caught by looking rather than by the checker:
+report-sized type is unreadable on a phone, so every size is derived from frame
+height; and titles and row labels overflow the frame unless they are measured and
+shrunk. Render the frame and look at it before calling a chart done.
+
 ## Covers
 
 ```

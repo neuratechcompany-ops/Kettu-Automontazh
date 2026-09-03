@@ -17,9 +17,34 @@ FONTMAP = {"onest": "Onest-ExtraBold.ttf",
            "golos": "GolosText-ExtraBold.ttf",
            "montserrat": "Montserrat-ExtraBold.ttf"}
 
-BG = (11, 18, 32)
+BG = (11, 18, 32)          # #0B1220 — the chart surface
 FG = (255, 255, 255)
-ACCENT = (75, 65, 165)
+
+# Categorical slots for the dark surface, in fixed order. Validated with the
+# dataviz skill's checker against #0B1220: lightness band, chroma floor, CVD
+# separation, normal-vision floor and >=3:1 contrast all pass.
+#
+# The caption pill's #4B41A5 is NOT usable here: L 0.444 falls outside the dark
+# band and it sits at 2.32:1 against this surface. It stays a text container,
+# where white type on top carries the contrast; a data mark has to stand against
+# the surface on its own.
+# The ORDER is the safety mechanism, not decoration: re-ordering these hues
+# breaks the adjacent-pair gates (putting violet next to blue drops CVD ΔE to
+# 1.9). Leave the sequence alone.
+SERIES = ["#3987e5", "#d95926", "#199e70", "#c98500",
+          "#d55181", "#008300", "#9085e9", "#e66767"]
+# A lone series has no adjacent pair to clear, so the brand violet is free to
+# carry single-series charts; it passes band, chroma and contrast on its own.
+SOLO = "#9085e9"
+SCATTER_CAP = 3            # past three slots the all-pairs floors fail
+
+
+def rgb(h):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+ACCENT = rgb(SOLO)
 
 
 def ease_out(t):

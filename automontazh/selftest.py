@@ -126,6 +126,14 @@ def cmd_selftest(args):
                                 "--dur", "1.0", "--out", "edit/ct.mp4"])
         step("chart swarm", ["chart", "swarm", "--text", "РОЙ", "--particles", "400",
                              "--dur", "1.0", "--out", "edit/cs.mp4"])
+        import importlib.util
+        if importlib.util.find_spec("matplotlib"):
+            step("viz area", ["viz", "area", "--data", "А=1,2,3;Б=3,2,1",
+                              "--dur", "0.6", "--out", "edit/va.mp4"])
+            step("viz heat", ["viz", "heat", "--data", "А=1,2;Б=3,4",
+                              "--dur", "0.6", "--out", "edit/vh.mp4"])
+        else:
+            print("  skip viz (matplotlib not installed)")
         step("reframe track", ["reframe", "take.mp4", "--to", "1080x1920"])
         step("render with reframe", ["render", "b.json", "--reframe"])
 
