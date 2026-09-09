@@ -115,6 +115,7 @@ def _key(clip, edl):
     blob = json.dumps([clip, edl["canvas"], edl.get("grade"), edl.get("fit"),
                        bool(edl.get("reframe")),
                        bool(edl.get("interpolate")),
+                       edl.get("bleep"),
                        edl.get("audio", {}).get("voice"),
                        edl.get("audio", {}).get("voice_strength", 1.0),
                        edl.get("audio", {}).get("fade_ms", 30),
@@ -173,10 +174,20 @@ def render_clip(idx, clip, edl, wd):
     if (edl.get("audio") or {}).get("voice") == "auto" and not mute:
         voice_chain = voice.profile(clip["src"], edl.get("_root", "."),
                                  strength=float(edl["audio"].get("voice_strength", 1.0)))["chain"]
+    # bleeps are given in SOURCE seconds; map them onto this clip
+    bleeps = []
+    for b in (edl.get("bleep") or []):
+        if b.get("src") and b["src"] != clip["src"]:
+            continue
+        lo, hi = max(float(b["at"]), clip["in"]), min(float(b["to"]), clip["out"])
+        if hi > lo:
+            bleeps.append(((lo - clip["in"]) / speed, (hi - clip["in"]) / speed))
+
     af = "asetpts=PTS-STARTPTS," + audio_chain(
         src_dur, edl.get("audio", {}).get("fade_ms", 30), speed,
         edl.get("audio", {}).get("denoise", False),
-        ",".join(x for x in (voice_chain, clip.get("af")) if x) or None)
+        ",".join(x for x in (voice_chain, clip.get("af")) if x) or None,
+        bleep=bleeps or None)
 
     # -t belongs on the INPUT: as an output option it means "emit N seconds",
     # which under setpts speed-up pulls source from beyond the out point.

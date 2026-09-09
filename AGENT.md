@@ -97,6 +97,19 @@ Run them and read the numbers before promising anything. A common surprise: phon
 footage usually has a 40+ dB signal-to-noise ratio, so a denoiser has nothing to
 do — the real problem is a dull, boomy tone, which is an EQ problem.
 
+## Bleeping
+
+`automontazh bleep FILE` finds obscenities and lists them; it never acts on its own.
+To censor, put `"bleep": [{"at": s, "to": s}]` and `"captions": {"censor": [...]}` in
+the EDL — **both**, because muting the audio while the word still stands in the
+subtitles censors nothing.
+
+The root list is deliberately narrow. A false bleep is worse than a miss, so the
+"еб" root only fires word-initially or after a real prefix; otherwise ordinary words
+would be censored. Verify by transcribing the finished file, not by listening.
+
+Some material is meant to keep its profanity. Ask before censoring.
+
 ## Low frame-rate sources
 
 Phone and messenger footage often arrives at 16–20 fps. Delivered at 30 it simply

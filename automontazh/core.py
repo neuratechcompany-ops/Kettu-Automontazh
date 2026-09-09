@@ -249,7 +249,24 @@ def quantize(dur, fps):
     return max(1, round(dur * fps)) / float(fps)
 
 
-def audio_chain(dur, fade_ms=30, speed=1.0, denoise=False, extra=None, pad=True):
+def bleep_filter(ranges, tone_hz=1000, level=0.22):
+    """Replace the given clip-local ranges with a tone.
+
+    One `aeval` does both jobs — mute the original and synthesise the beep — so no
+    second input has to be threaded through the render, which would complicate
+    every clip that already juggles picture and sound from different files.
+    """
+    if not ranges:
+        return None
+    gate = "+".join(f"between(t,{a:.4f},{b:.4f})" for a, b in ranges)
+    beep = f"{level}*sin(2*PI*{tone_hz}*t)*({gate})"
+    keep = f"(1-min(1,({gate})))"
+    return (f"aeval=exprs='val(0)*{keep}+{beep}|val(1)*{keep}+{beep}'"
+            f":channel_layout=stereo")
+
+
+def audio_chain(dur, fade_ms=30, speed=1.0, denoise=False, extra=None, pad=True,
+                bleep=None):
     """30 ms fades at every cut is a hard rule -- it kills click artefacts.
     apad is the other hard rule: a source whose audio ends before its video
     (very common) would otherwise let -shortest silently truncate the film."""
@@ -262,6 +279,9 @@ def audio_chain(dur, fade_ms=30, speed=1.0, denoise=False, extra=None, pad=True)
         dur = dur / speed
     if extra:
         f.append(extra)
+    bf = bleep_filter(bleep) if bleep else None
+    if bf:
+        f.append(bf)
     if pad:
         f.append("apad")
     fd = max(0.001, fade_ms / 1000.0)

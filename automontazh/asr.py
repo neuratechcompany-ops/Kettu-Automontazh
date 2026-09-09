@@ -34,6 +34,38 @@ ISOLATED_FILLERS = {
 }
 SOFT_PAUSE = 0.20   # s of silence that counts as a hesitation
 
+# Obscenity roots for the bleep. Deliberately narrow: the cost of a false match
+# (a bleep over an innocent word) is far worse than a miss, so the "еб" root only
+# fires word-initially or after a real prefix — otherwise "хлебать", "требовать"
+# and "потребность" would all be censored.
+MAT_PATTERNS = [
+    r"\bх[уy][йеёяию]\w*",
+    r"\w*пизд\w*",
+    r"\w*бля[дт]\w*",
+    r"\bбля\b",
+    r"\w*муда[кч]\w*",
+    r"\w*мудил\w*",
+    r"\w*долбо[её]б\w*",
+    r"\w*[её]бл[яюе]\w*",
+    r"\b(?:за|на|по|у|вы|от|до|пере|при|под|раз|вз|об)?[её]б(?:ат|ал|ан|ут|ёт|ет|ло|ли|ись|ну|нул|ём|ем)\w*",
+    r"\bнахуй\b", r"\bпохуй\b", r"\bнихуя\b",
+]
+
+
+def find_profanity(words, extra=()):
+    """-> [(start, end, word)] . Always report these before bleeping: a machine
+    should not be the last word on what gets censored."""
+    pats = [re.compile(p, re.IGNORECASE) for p in MAT_PATTERNS]
+    extra = {norm(w) for w in extra if w}
+    out = []
+    for w in words:
+        n = norm(w["w"])
+        if not n:
+            continue
+        if n in extra or any(p.fullmatch(n) or p.match(n) for p in pats):
+            out.append((w["s"], w["e"], w["w"]))
+    return out
+
 # Verbal tics that span several words. Same two-tier logic as single words:
 #   ALWAYS — pure padding, safe to cut wherever it appears
 #   REPEAT — fine once, a tic on the way back: keep the FIRST, cut every echo

@@ -83,6 +83,16 @@ def timeline_words(edl, root="."):
                         "s": seg["t0"] + (s - seg["in"]) / seg["speed"],
                         "e": seg["t0"] + (e - seg["in"]) / seg["speed"]})
     out.sort(key=lambda x: x["s"])
+    # Censoring belongs here, before any style sees the text: bleeping the audio
+    # while the word still stands in the subtitles defeats the point.
+    cens = [c.lower() for c in ((edl.get("captions") or {}).get("censor") or [])]
+    if cens:
+        import unicodedata as _u
+        for w in out:
+            bare = _u.normalize("NFKC", w["w"]).lower().strip(".,!?:;»«\"'()")
+            if any(bare.startswith(c) or c.startswith(bare) for c in cens):
+                keep = w["w"][:1]
+                w["w"] = keep + "*" * max(2, len(w["w"].strip(".,!?")) - 1)
     # Whisper splits hyphenated words in two ("Во" + "-первых,"); glue them back
     # or the caption reads "ВО -ПЕРВЫХ".
     glued = []

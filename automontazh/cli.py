@@ -51,6 +51,25 @@ def cmd_captions(args):
     OUT.say(captions.build_ass(edl, args.root, args.style))
 
 
+def cmd_bleep(args):
+    """Report, do not act. A machine should not have the last word on censorship."""
+    doc = asr._load(args.words, args.root)
+    extra = [x.strip() for x in (args.extra or "").split(",") if x.strip()]
+    hits = asr.find_profanity(doc["words"], extra)
+    OUT.emit(hits=[{"at": round(a, 3), "to": round(b, 3), "word": w} for a, b, w in hits],
+             edl_fragment=[{"at": round(a - 0.05, 3), "to": round(b + 0.05, 3)}
+                           for a, b, _ in hits],
+             censor=sorted({w.strip(".,!?:;").lower() for _, _, w in hits}))
+    if not hits:
+        OUT.say("мата не найдено")
+        return
+    OUT.say(f"найдено {len(hits)}:")
+    for a, b, w in hits:
+        OUT.say(f"  {hhmmss(a)}–{hhmmss(b)}  «{w}»")
+    OUT.say("\nпроверь список глазами перед запикиванием — ложное срабатывание "
+            "хуже пропуска")
+
+
 def cmd_cards(args):
     import json
     p = Path(args.edl)
@@ -158,6 +177,11 @@ def main():
     p = sub.add_parser("pack", help="words.json -> compact transcript for reading")
     p.add_argument("words")
     p.set_defaults(fn=asr.cmd_pack)
+
+    p = sub.add_parser("bleep", help="find obscenities in the transcript and list them")
+    p.add_argument("words")
+    p.add_argument("--extra", help="дополнительные слова через запятую")
+    p.set_defaults(fn=cmd_bleep)
 
     p = sub.add_parser("tics", help="report repeated phrases / verbal tics")
     p.add_argument("words")

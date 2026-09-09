@@ -185,6 +185,25 @@ def cmd_selftest(args):
         results.append(("ass override tags survive escaping", ok_esc, []))
         OUT.say(f"  {'ok  ' if ok_esc else 'FAIL'} ass override tags survive escaping")
 
+        from . import asr as _pf
+        mk = lambda ws: [{"w": w, "s": i * 0.5, "e": i * 0.5 + 0.4, "p": 1.0}
+                         for i, w in enumerate(ws)]
+        hits = {h[2] for h in _pf.find_profanity(
+            mk(["хлебать", "требовать", "потребность", "хлеб", "себе", "победа",
+                "ебать", "пиздеж", "долбоебами", "нахуй"]))}
+        ok_pf = hits == {"ебать", "пиздеж", "долбоебами", "нахуй"}
+        results.append(("obscenity match without false positives", ok_pf, []))
+        print(f"  {'ok  ' if ok_pf else 'FAIL'} obscenity match without false positives "
+              f"({sorted(hits)})")
+
+        from .core import bleep_filter
+        bf = bleep_filter([(1.0, 1.4), (3.0, 3.2)])
+        ok_bf = ("aeval" in bf and "between(t,1.0000,1.4000)" in bf
+                 and "between(t,3.0000,3.2000)" in bf and "sin(2*PI*1000*t)" in bf
+                 and bleep_filter([]) is None)
+        results.append(("bleep filter mutes and beeps the given ranges", ok_bf, []))
+        print(f"  {'ok  ' if ok_bf else 'FAIL'} bleep filter mutes and beeps the given ranges")
+
         from . import core as _core
         low = {"fps": 16.4, "w": 720, "h": 1280}
         cv = {"w": 1080, "h": 1920, "fps": 30}
